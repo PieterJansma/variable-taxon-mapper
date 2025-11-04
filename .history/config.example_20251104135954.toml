@@ -27,7 +27,7 @@ ef_search = 128
 num_threads = 0
 
 [evaluation]
-n = 100
+n = 10_000
 seed = 37
 dedupe_on = ["name"]
 progress_log_interval = 10
