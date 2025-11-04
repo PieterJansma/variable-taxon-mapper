@@ -1,0 +1,93 @@
+[global]
+seed = 37
+
+[data]
+# variables_csv = "data/Variables.csv"
+variables_csv = "data/Variables.csv"
+keywords_csv = "data/Keywords_summarized_new.csv"
+
+[embedder]
+model_name = "cambridgeltl/SapBERT-from-PubMedBERT-fulltext"
+# model_name = "BAAI/bge-large-en-v1.5"
+max_length = 512
+batch_size = 256
+fp16 = true
+# device = "cpu"
+mean_pool = false # false = CLS token
+
+[taxonomy_embeddings]
+gamma = 0.05
+summary_weight = 0.85
+
+[hnsw]
+space = "cosine"
+M = 32
+ef_construction = 200
+ef_search = 128
+num_threads = 0
+
+[evaluation]
+n = 100
+seed = 37
+dedupe_on = ["name"]
+progress_log_interval = 10
+
+[pruning]
+enable_taxonomy_pruning = true
+
+tree_sort_mode = "relevance" # options: relevance, topological, alphabetical, proximity, pagerank
+suggestion_sort_mode = "relevance" # independent ranking for the suggestion list; options mirror tree_sort_mode
+suggestion_list_limit = 6 # number of candidates surfaced alongside the tree
+
+ # options: dominant_forest, anchor_hull, similarity_threshold, radius, steiner_similarity, community_pagerank
+pruning_mode = "anchor_hull"
+
+# similarity_threshold = 0.0 # cosine threshold used when pruning_mode="similarity_threshold"
+# pruning_radius = 2 # undirected hop limit when pruning_mode="radius"
+
+anchor_top_k = 8 # ANN anchors to fetch per item before pruning
+max_descendant_depth = 4 # limit descendants pulled under each anchor
+lexical_anchor_limit = 3 # additional anchors sourced from lexical overlap
+community_clique_size = 2 # k for k-clique community expansion
+max_community_size = 160 # max nodes pulled from any single community, if set
+
+anchor_overfetch_multiplier = 6 # ANN search overfetch multiplier (before pruning)
+anchor_min_overfetch = 96
+
+pagerank_damping = 0.875
+pagerank_score_floor = 0.0
+# Cap candidate nodes before PageRank; the smaller of this and node_budget wins.
+# pagerank_candidate_limit = 384
+
+node_budget = 200 # hard cap on nodes retained in the final allowed set
+# surrogate_root_label = "Study catalogue variables" # optional: introduce a surrogate root label for the taxonomy tree
+
+[llm]
+endpoint = "http://127.0.0.1:8080/completions"
+n_predict = 32
+temperature = 0.0
+top_k = 20
+top_p = 0.8
+min_p = 0.0
+cache_prompt = true
+n_keep = -1
+force_slot_id = false # set true to force explicit slot ids on the llama server
+embedding_remap_threshold = 0.25
+# Enable snapping ancestor predictions down to a better-matching child label.
+snap_to_child = true
+snap_margin = 0.2
+# Options: "token_sort", "token_set", "embedding"
+snap_similarity = "token_set"
+# Maximum descendant depth to consider when snapping (1 = direct children only).
+snap_descendant_depth = 3
+
+[parallelism]
+num_slots = 4
+pool_maxsize = 8
+pruning_workers = 8
+pruning_batch_size = 8
+pruning_queue_size = 16
+
+[http]
+sock_connect = 10.0
+sock_read_floor = 30.0
