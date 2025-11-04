@@ -5,7 +5,7 @@ from __future__ import annotations
 import difflib
 import json
 import re
-import sys
+import logging
 import threading
 from dataclasses import dataclass
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
@@ -23,6 +23,8 @@ from .llm_chat import (
 
 _PROMPT_DEBUG_SHOWN = False
 
+logger = logging.getLogger(__name__)
+
 
 def _print_prompt_once(prompt: str) -> None:
     """Print the first LLM prompt for debugging."""
@@ -30,10 +32,7 @@ def _print_prompt_once(prompt: str) -> None:
     global _PROMPT_DEBUG_SHOWN
     if not _PROMPT_DEBUG_SHOWN:
         _PROMPT_DEBUG_SHOWN = True
-        print("\n====== LLM PROMPT (one-time) ======\n")
-        print(prompt)
-        print("\n====== END PROMPT ======\n")
-        sys.stdout.flush()
+        logger.debug("\n====== LLM PROMPT (one-time) ======\n%s\n====== END PROMPT ======\n", prompt)
 
 
 def _build_allowed_index_map(
@@ -154,6 +153,8 @@ class MatchRequest:
 
 
 def _llm_kwargs_for_config(cfg: LLMConfig, *, slot_id: int) -> Dict[str, Any]:
+    use_explicit_slots = getattr(cfg, "force_slot_id", False)
+
     kwargs: Dict[str, Any] = {
         "temperature": cfg.temperature,
         "top_k": cfg.top_k,
@@ -162,8 +163,11 @@ def _llm_kwargs_for_config(cfg: LLMConfig, *, slot_id: int) -> Dict[str, Any]:
         "grammar": cfg.grammar if cfg.grammar is not None else GRAMMAR_RESPONSE,
         "cache_prompt": cfg.cache_prompt,
         "n_keep": cfg.n_keep,
-        "slot_id": slot_id,
     }
+    if use_explicit_slots:
+        kwargs["slot_id"] = slot_id
+    else:
+        kwargs["slot_id"] = -1
     kwargs["n_predict"] = max(int(cfg.n_predict), 64)
     return kwargs
 

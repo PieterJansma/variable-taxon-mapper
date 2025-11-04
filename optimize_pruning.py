@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import math
+import os
 import random
 import threading
 import warnings
@@ -31,6 +33,10 @@ from src.taxonomy import (
     build_name_maps_from_graph,
     build_taxonomy_graph,
 )
+from src.utils import configure_logging, ensure_file_exists
+
+
+logger = logging.getLogger(__name__)
 
 
 # ======================================================================================
@@ -266,8 +272,11 @@ def prepare_context(
     row_limit: Optional[int],
 ) -> EvaluationContext:
     variables_default, keywords_default = config.data.to_paths(base_path)
-    variables_path = _resolve_path(base_path, variables, variables_default)
-    keywords_path = _resolve_path(base_path, keywords, keywords_default)
+    variables_path = _resolve_path(base_path, variables, variables_default).resolve()
+    keywords_path = _resolve_path(base_path, keywords, keywords_default).resolve()
+
+    ensure_file_exists(variables_path, "variables CSV")
+    ensure_file_exists(keywords_path, "keywords CSV")
 
     variables_df = pd.read_csv(variables_path, low_memory=False)
     keywords_raw = pd.read_csv(keywords_path)
@@ -638,7 +647,7 @@ def create_objective(state: ObjectiveState):
         trial.set_user_attr("feasibility_raw", _q(feasibility_raw, 3))
         trial.set_user_attr("feas_gate", _q(feas_gate, 3))
 
-        print(
+        logger.info(
             "\n".join(
                 [
                     f"Trial #{trial.number} (run {trial.number + 1}/{state.total_trials})",
@@ -653,10 +662,9 @@ def create_objective(state: ObjectiveState):
                     f"  shaping_reward={shaping_reward:.2f}",
                     f"  miss_penalty={miss_penalty:.2f}",
                 ]
-            ),
-            flush=True,
+            )
         )
-        print("-" * 60, flush=True)
+        logger.info("-" * 60)
 
         return score
 
@@ -736,20 +744,20 @@ def print_config_with_inline_comments(
     *,
     inline_placeholders_if_missing: Optional[Mapping[str, str]] = None,
 ) -> None:
-    print(f"\nSuggested [{name}] configuration:")
+    logger.info("\nSuggested [%s] configuration:", name)
     items = cfg.to_kwargs()
     for key, value in items.items():
         comment = inline_comments.get(key)
         if comment:
-            print(f"{key} = {json.dumps(value)}  # {comment}")
+            logger.info("%s = %s  # %s", key, json.dumps(value), comment)
         else:
-            print(f"{key} = {json.dumps(value)}")
+            logger.info("%s = %s", key, json.dumps(value))
     if inline_placeholders_if_missing:
         for key, placeholder in inline_placeholders_if_missing.items():
             if key not in items:
                 comment = inline_comments.get(key, "")
                 tail = f"  # {comment}" if comment else ""
-                print(f"# {key} = {placeholder}{tail}")
+                logger.info("# %s = %s%s", key, placeholder, tail)
 
 
 # ======================================================================================
@@ -758,10 +766,13 @@ def print_config_with_inline_comments(
 
 
 def main(argv: Optional[Sequence[str]] = None) -> None:
+    configure_logging(level=os.getenv("LOG_LEVEL", logging.INFO))
+
     args = parse_args(argv)
     config_path = args.config.resolve()
     base_path = config_path.parent
     app_config = load_config(config_path)
+    logger.info("Loaded configuration from %s", config_path)
 
     # Optionally suppress Optuna experimental warnings
     if args.suppress_experimental_warnings:
@@ -779,6 +790,12 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
         variables=args.variables,
         keywords=args.keywords,
         row_limit=args.row_limit,
+    )
+
+    logger.info(
+        "Prepared optimization context with %d rows across %d taxonomy nodes",
+        len(context.rows),
+        context.total_nodes,
     )
 
     if len(context.rows) == 0:
@@ -829,6 +846,12 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
         min_possible=args.min_possible,
     )
 
+    logger.info(
+        "Starting optimization with %d trials (timeout=%s)",
+        args.trials,
+        args.timeout,
+    )
+
     try:
         study.optimize(
             create_objective(state),
@@ -837,7 +860,7 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
             gc_after_trial=True,
         )
     except KeyboardInterrupt:
-        print("\nOptimization interrupted by user. Proceeding to results...")
+        logger.warning("Optimization interrupted by user. Proceeding to results...")
 
     min_possible = (
         args.min_possible if args.min_possible is not None else args.min_coverage
@@ -846,12 +869,11 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
         study, min_possible=min_possible, min_coverage=args.min_coverage
     )
     if best is None:
-        print("No successful trials were completed.")
+        logger.warning("No successful trials were completed.")
         return
 
     params = dump_trial_parameters(best)
-    print("Best trial parameters:")
-    print(json.dumps(params, indent=2, sort_keys=True))
+    logger.info("Best trial parameters:\n%s", json.dumps(params, indent=2, sort_keys=True))
 
     INLINE_PRUNING_COMMENTS: Dict[str, str] = {
         "enable_taxonomy_pruning": "",
@@ -908,7 +930,7 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
     }
     if taxonomy_updates:
         best_taxonomy_cfg = replace(app_config.taxonomy_embeddings, **taxonomy_updates)
-        print("\nSuggested [taxonomy_embeddings] configuration:")
+        logger.info("\nSuggested [taxonomy_embeddings] configuration:")
         items = best_taxonomy_cfg.to_kwargs()
         taxonomy_inline = {
             "gamma": "blend between name embedding and structural context (higher → more structure)",
@@ -917,9 +939,9 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
         for key, value in items.items():
             comment = taxonomy_inline.get(key)
             if comment:
-                print(f"{key} = {json.dumps(value)}  # {comment}")
+                logger.info("%s = %s  # %s", key, json.dumps(value), comment)
             else:
-                print(f"{key} = {json.dumps(value)}")
+                logger.info("%s = %s", key, json.dumps(value))
 
     if args.save_trials_csv:
         rows = []
@@ -933,9 +955,9 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
         if rows:
             df = pd.DataFrame(rows)
             df.to_csv(args.save_trials_csv, index=False)
-            print(f"Saved {len(rows)} completed trials → {args.save_trials_csv}")
+            logger.info("Saved %d completed trials → %s", len(rows), args.save_trials_csv)
         else:
-            print(f"No completed trials to save at {args.save_trials_csv}")
+            logger.info("No completed trials to save at %s", args.save_trials_csv)
 
 
 if __name__ == "__main__":
