@@ -30,11 +30,11 @@ PORT="${PORT:-$LB_PORT}"             # exported to your app
 CTX=${CTX:-120000}                   # llama.cpp -c
 SLOTS=${SLOTS:-6}                    # llama.cpp -np
 
-LOG_DIR="${LOG_DIR:-$WORKDIR/logs}"
+LOG_DIR="${LOG_DIR:-$HOME/tmp02/logs}"
 LLAMA_BIN="${LLAMA_BIN:-$HOME/tmp02/Repositories/llama.cpp/build/bin/llama-server}"
 MODEL="${MODEL:-$HOME/tmp02/Models/GGUF/Qwen3-4B-Instruct-2507-Q8_0.gguf}"
 
-VTM_DIR="${VTM_DIR:-$WORKDIR/Repositories/variable-taxon-mapper}"
+VTM_DIR="${VTM_DIR:-$HOME/tmp02/Repositories/variable-taxon-mapper}"
 VTM_CFG="${VTM_CFG:-config.example.toml}"
 
 # -------------------- Determine final command --------------------
