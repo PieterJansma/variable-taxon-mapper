@@ -27,9 +27,9 @@ ef_search = 128
 num_threads = 0
 
 [evaluation]
-n = 2000
+n = 100
 seed = 37
-dedupe_on = ["name"]
+dedupe_on = ["description"]
 progress_log_interval = 10
 
 [pruning]
