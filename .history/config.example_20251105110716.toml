@@ -82,7 +82,7 @@ snap_similarity = "token_set"
 snap_descendant_depth = 3
 
 [parallelism]
-num_slots = 1
+num_slots = 2
 pool_maxsize = 8
 pruning_workers = 8
 pruning_batch_size = 8
