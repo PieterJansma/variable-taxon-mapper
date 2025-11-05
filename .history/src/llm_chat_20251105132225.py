@@ -52,7 +52,7 @@ async def llama_completion_async(
     import os
 
     # alleen aanzetten als je wilt (bv. export USE_LLAMACPP_GRAMMAR=1)
-    if os.getenv("USE_LLAMACPP_GRAMMAR", "1") == "1":
+    if os.getenv("USE_LLAMACPP_GRAMMAR", "0") == "1":
         payload.setdefault("grammar", GRAMMAR_RESPONSE)
 
     # defensief: standaard stops & determinisme, zonder config te overschrijven
