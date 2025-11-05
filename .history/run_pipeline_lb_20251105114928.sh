@@ -32,7 +32,7 @@ SLOTS=${SLOTS:-1}                    # llama.cpp -np
 
 LOG_DIR="${LOG_DIR:-$WORKDIR/logs}"
 LLAMA_BIN="${LLAMA_BIN:-$WORKDIR/Repositories/llama.cpp/build/bin/llama-server}"
-MODEL="${MODEL:-$WORKDIR/Models/GGUF/Mixtral-8x7B-Instruct-v0.1.Q4_K_M.gguf}"
+MODEL="${MODEL:-$WORKDIR/Models/GGUF/mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf}"
 
 VTM_DIR="${VTM_DIR:-$WORKDIR/Repositories/variable-taxon-mapper}"
 VTM_CFG="${VTM_CFG:-config.example.toml}"
