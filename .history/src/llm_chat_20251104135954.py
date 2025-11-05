@@ -208,7 +208,7 @@ def llama_completion(
             )
         return loop.run_until_complete(_runner())
 
-'''
+
 def make_tree_match_prompt(
     tree_markdown_labels_only: str,
     item: Dict[str, Optional[str]],
@@ -257,53 +257,3 @@ def make_tree_match_prompt(
         )
         .strip()
     )
-'''
-
-def make_tree_match_prompt(
-    tree_markdown_labels_only: str,
-    item: Dict[str, Optional[str]],
-) -> str:
-    """
-    Builds a single-turn prompt for Mistral/Mixtral Instruct models.
-
-    Format:
-    <s>[INST] <<SYS>>
-    ... system instructions ...
-    <</SYS>>
-
-    ... user content ...
-    [/INST]
-    """
-    tree_md = (tree_markdown_labels_only or "").strip()
-    lab = clean_text(item.get("label"))
-    nam = clean_text(item.get("name"))
-    dat = clean_text(item.get("dataset"))
-    desc = clean_text(item.get("description"))
-
-    system_txt = dedent("""\
-        # TASK
-        • From the TREE (or SUGGESTIONS), choose **exactly one** concept that best matches the ITEM.
-        • Prefer the most specific matching child, if present; only choose the parent if no child fits.
-        • The TREE is a nested (indented) Markdown list where each bullet is: `- <concept label> [<optional short description>]`.
-        • Concepts may include a short description in square brackets.
-          Those descriptions are guidance only; **output must be the exact concept label (no description)**.
-        • SUGGESTIONS were preselected based on similarity to ITEM, they are not exhaustive.
-        • Output a single-line JSON, for example `{"concept_label":"..."}`.
-    """).strip()
-
-    user_txt = dedent(f"""\
-        {tree_md}
-
-        # ITEM:
-        **{lab}** ({nam})
-        dataset: {dat}
-        description: {desc}
-    """).strip()
-
-    prompt = (
-        "<s>[INST] <<SYS>>\n"
-        f"{system_txt}\n"
-        "<</SYS>>\n\n"
-        f"{user_txt} [/INST]"
-    )
-    return prompt
