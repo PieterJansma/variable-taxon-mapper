@@ -89,5 +89,5 @@ pruning_batch_size = 8
 pruning_queue_size = 16
 
 [http]
-sock_connect = 10.0
-sock_read_floor = 30.0
+sock_connect = 20.0
+sock_read_floor = 120.0
