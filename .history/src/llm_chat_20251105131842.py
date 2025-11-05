@@ -48,19 +48,6 @@ async def llama_completion_async(
     payload: Dict[str, Any] = {"prompt": prompt}
     payload.update(kwargs)
 
-    import os
-
-    # alleen aanzetten als je wilt (bv. export USE_LLAMACPP_GRAMMAR=1)
-    if os.getenv("USE_LLAMACPP_GRAMMAR", "0") == "1":
-        payload.setdefault("grammar", GRAMMAR_RESPONSE)
-
-    # defensief: standaard stops & determinisme, zonder config te overschrijven
-    payload.setdefault("stop", ["</s>", "\n\n", "\n"])
-    payload.setdefault("temperature", 0.0)
-    payload.setdefault("top_p", 1.0)
-    payload.setdefault("n_predict", 64)
-
-
     close_session = False
     if session is None:
         timeout_cfg = aiohttp.ClientTimeout(
