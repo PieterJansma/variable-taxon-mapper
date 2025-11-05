@@ -27,8 +27,8 @@ GPU_IDS=${GPU_IDS:-"0 1"}            # e.g. "0" or "0 1 2"
 BASE_PORT=${BASE_PORT:-18080}        # backends: BASE_PORT, BASE_PORT+1, ...
 LB_PORT=${LB_PORT:-18000}            # front-door LB port
 PORT="${PORT:-$LB_PORT}"             # exported to your app
-CTX=${CTX:-40000}                   # llama.cpp -c
-SLOTS=${SLOTS:-4}                    # llama.cpp -np
+CTX=${CTX:-14000}                   # llama.cpp -c
+SLOTS=${SLOTS:-1}                    # llama.cpp -np
 
 LOG_DIR="${LOG_DIR:-$WORKDIR/logs}"
 LLAMA_BIN="${LLAMA_BIN:-$WORKDIR/Repositories/llama.cpp/build/bin/llama-server}"
