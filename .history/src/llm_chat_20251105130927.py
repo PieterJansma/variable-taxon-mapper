@@ -259,6 +259,7 @@ def make_tree_match_prompt(
     )
 '''
 
+from textwrap import dedent
 
 def make_tree_match_prompt(tree_markdown_labels_only: str, item):
     tree_md = (tree_markdown_labels_only or "").strip()
