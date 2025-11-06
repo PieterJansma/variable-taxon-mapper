@@ -39,9 +39,6 @@ MODEL="${MODEL:-$WORKDIR/Models/GGUF/Qwen2.5-32B-Instruct/Qwen2.5-32B-Instruct-Q
 VTM_DIR="${VTM_DIR:-$WORKDIR/Repositories/variable-taxon-mapper}"
 VTM_CFG="${VTM_CFG:-config.example.toml}"
 
-mkdir -p "$LOG_DIR"
-echo "[INFO] WORKDIR=$WORKDIR"
-
 # -------------------- Determine final command --------------------
 DEFAULT_CMD=(python -u -m main "$VTM_CFG")
 
