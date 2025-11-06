@@ -21,7 +21,7 @@
 #   PORT      (exported to variable-taxon-mapper, default -> LB_PORT)
 #   (arguments) final command override, e.g. `./run_pipeline_lb.sh python -u -m predict config.toml`
 set -euo pipefail
-WORKDIR="/groups/umcg-gcc/tmp02/users/umcg-pjansma/Repositories/variable-taxon-mapper" \
+WORKDIR="${WORKDIR:-${SLURM_SUBMIT_DIR:-$PWD}}"
 
 
 # -------------------- Configurable defaults --------------------
